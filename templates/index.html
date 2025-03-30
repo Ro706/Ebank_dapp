@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bank DApp - Python</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+<body>
+    <h1>Bank DApp</h1>
+    
+    <div>
+        <h2>Account Balance: <span id="balance">0</span></h2>
+        <button onclick="refreshBalance()">Refresh Balance</button>
+    </div>
+    
+    <div>
+        <h3>Deposit</h3>
+        <input type="number" id="depositAmount" placeholder="Amount">
+        <button onclick="deposit()">Deposit</button>
+    </div>
+    
+    <div>
+        <h3>Withdraw</h3>
+        <input type="number" id="withdrawAmount" placeholder="Amount">
+        <button onclick="withdraw()">Withdraw</button>
+    </div>
+    
+    <div>
+        <h3>Transfer</h3>
+        <input type="text" id="recipient" placeholder="Recipient Address">
+        <input type="number" id="transferAmount" placeholder="Amount">
+        <button onclick="transfer()">Transfer</button>
+    </div>
+
+    <script>
+        function refreshBalance() {
+            axios.get('/balance')
+                .then(response => {
+                    document.getElementById('balance').textContent = response.data.balance;
+                });
+        }
+        
+        function deposit() {
+            const amount = document.getElementById('depositAmount').value;
+            axios.post('/deposit', { amount: parseInt(amount) })
+                .then(() => refreshBalance())
+                .catch(error => alert(error.response.data.error));
+        }
+        
+        function withdraw() {
+            const amount = document.getElementById('withdrawAmount').value;
+            axios.post('/withdraw', { amount: parseInt(amount) })
+                .then(() => refreshBalance())
+                .catch(error => alert(error.response.data.error));
+        }
+        
+        function transfer() {
+            const amount = document.getElementById('transferAmount').value;
+            const recipient = document.getElementById('recipient').value;
+            axios.post('/transfer', { amount: parseInt(amount), recipient })
+                .then(() => refreshBalance())
+                .catch(error => alert(error.response.data.error));
+        }
+        
+        // Initial balance load
+        refreshBalance();
+    </script>
+</body>
+</html>
