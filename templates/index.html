@@ -3,62 +3,273 @@
 <head>
     <title>Bank DApp - Python</title>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #166088;
+            --accent-color: #4fc3f7;
+            --background-color: #f8f9fa;
+            --card-color: #ffffff;
+            --text-color: #333333;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--secondary-color);
+            text-align: center;
+            margin: 20px 0 40px;
+            font-size: 2.5rem;
+        }
+
+        h2, h3 {
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+        }
+
+        #balance {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .balance-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .operation-container {
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 2px rgba(79, 195, 247, 0.2);
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .transfer-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 768px) {
+            .transfer-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .balance-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            animation: slideIn 0.5s forwards;
+            z-index: 1000;
+        }
+
+        .success {
+            background-color: var(--success-color);
+        }
+
+        .error {
+            background-color: var(--error-color);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Bank DApp</h1>
-    
-    <div>
-        <h2>Account Balance: <span id="balance">0</span></h2>
-        <button onclick="refreshBalance()">Refresh Balance</button>
-    </div>
-    
-    <div>
-        <h3>Deposit</h3>
-        <input type="number" id="depositAmount" placeholder="Amount">
-        <button onclick="deposit()">Deposit</button>
-    </div>
-    
-    <div>
-        <h3>Withdraw</h3>
-        <input type="number" id="withdrawAmount" placeholder="Amount">
-        <button onclick="withdraw()">Withdraw</button>
-    </div>
-    
-    <div>
-        <h3>Transfer</h3>
-        <input type="text" id="recipient" placeholder="Recipient Address">
-        <input type="number" id="transferAmount" placeholder="Amount">
-        <button onclick="transfer()">Transfer</button>
+    <div id="notification" class="notification" style="display: none;"></div>
+
+    <div class="card">
+        <h1>Bank DApp</h1>
+        
+        <div class="balance-container">
+            <div>
+                <h2>Account Balance</h2>
+                <div style="font-size: 2rem; color: var(--primary-color);">
+                    <span id="balance">0</span> ETH
+                </div>
+            </div>
+            <button onclick="refreshBalance()" style="max-width: 200px;">Refresh Balance</button>
+        </div>
+        
+        <div class="operation-container">
+            <h3>Deposit Funds</h3>
+            <div class="form-group">
+                <input type="number" id="depositAmount" placeholder="Amount in ETH" min="0" step="0.01">
+                <button onclick="deposit()">Deposit</button>
+            </div>
+        </div>
+        
+        <div class="operation-container">
+            <h3>Withdraw Funds</h3>
+            <div class="form-group">
+                <input type="number" id="withdrawAmount" placeholder="Amount in ETH" min="0" step="0.01">
+                <button onclick="withdraw()">Withdraw</button>
+            </div>
+        </div>
+        
+        <div class="operation-container">
+            <h3>Transfer Funds</h3>
+            <div class="transfer-group">
+                <input type="text" id="recipient" placeholder="Recipient Address">
+                <input type="number" id="transferAmount" placeholder="Amount in ETH" min="0" step="0.01">
+            </div>
+            <button onclick="transfer()" style="margin-top: 10px;">Transfer</button>
+        </div>
     </div>
 
     <script>
+        function showNotification(message, isSuccess) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${isSuccess ? 'success' : 'error'}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
         function refreshBalance() {
             axios.get('/balance')
                 .then(response => {
                     document.getElementById('balance').textContent = response.data.balance;
+                    showNotification('Balance refreshed successfully', true);
+                })
+                .catch(error => {
+                    showNotification('Error refreshing balance', false);
                 });
         }
         
         function deposit() {
             const amount = document.getElementById('depositAmount').value;
-            axios.post('/deposit', { amount: parseInt(amount) })
-                .then(() => refreshBalance())
-                .catch(error => alert(error.response.data.error));
+            if (!amount || amount <= 0) {
+                showNotification('Please enter a valid amount', false);
+                return;
+            }
+            
+            axios.post('/deposit', { amount: parseFloat(amount) })
+                .then(() => {
+                    refreshBalance();
+                    showNotification('Deposit successful', true);
+                    document.getElementById('depositAmount').value = '';
+                })
+                .catch(error => {
+                    showNotification(error.response?.data?.error || 'Deposit failed', false);
+                });
         }
         
         function withdraw() {
             const amount = document.getElementById('withdrawAmount').value;
-            axios.post('/withdraw', { amount: parseInt(amount) })
-                .then(() => refreshBalance())
-                .catch(error => alert(error.response.data.error));
+            if (!amount || amount <= 0) {
+                showNotification('Please enter a valid amount', false);
+                return;
+            }
+            
+            axios.post('/withdraw', { amount: parseFloat(amount) })
+                .then(() => {
+                    refreshBalance();
+                    showNotification('Withdrawal successful', true);
+                    document.getElementById('withdrawAmount').value = '';
+                })
+                .catch(error => {
+                    showNotification(error.response?.data?.error || 'Withdrawal failed', false);
+                });
         }
         
         function transfer() {
             const amount = document.getElementById('transferAmount').value;
             const recipient = document.getElementById('recipient').value;
-            axios.post('/transfer', { amount: parseInt(amount), recipient })
-                .then(() => refreshBalance())
-                .catch(error => alert(error.response.data.error));
+            
+            if (!amount || amount <= 0) {
+                showNotification('Please enter a valid amount', false);
+                return;
+            }
+            
+            if (!recipient) {
+                showNotification('Please enter a recipient address', false);
+                return;
+            }
+            
+            axios.post('/transfer', { amount: parseFloat(amount), recipient })
+                .then(() => {
+                    refreshBalance();
+                    showNotification('Transfer successful', true);
+                    document.getElementById('transferAmount').value = '';
+                    document.getElementById('recipient').value = '';
+                })
+                .catch(error => {
+                    showNotification(error.response?.data?.error || 'Transfer failed', false);
+                });
         }
         
         // Initial balance load
